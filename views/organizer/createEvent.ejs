@@ -1,0 +1,134 @@
+<%- include("../partials/header") %>
+<%- include("../partials/navbar") %>
+
+<div class="container mt-5">
+
+    <div class="card shadow">
+
+        <div class="card-header">
+
+            <h3>Create Event</h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <form action="/organizer/events/create" method="POST">
+
+                <div class="mb-3">
+
+                    <label>Title</label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="title"
+                        required>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label>Type</label>
+
+                    <select
+                        class="form-control"
+                        name="type">
+
+                        <option>Movie</option>
+                        <option>Concert</option>
+
+                    </select>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label>Venue</label>
+
+                    <select
+                        class="form-control"
+                        name="venue">
+
+                        <% venues.forEach(venue => { %>
+
+                            <option value="<%= venue._id %>">
+
+                                <%= venue.name %>
+
+                            </option>
+
+                        <% }) %>
+
+                    </select>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label>Date</label>
+
+                    <input
+                        type="date"
+                        class="form-control"
+                        name="date"
+                        required>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label>Start Time</label>
+
+                    <input
+                        type="time"
+                        class="form-control"
+                        name="startTime"
+                        required>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col">
+
+                        <label>Premium Price</label>
+
+                        <input
+                            type="number"
+                            class="form-control"
+                            name="pricing[Premium]"
+                            required>
+
+                    </div>
+
+                    <div class="col">
+
+                        <label>Standard Price</label>
+
+                        <input
+                            type="number"
+                            class="form-control"
+                            name="pricing[Standard]"
+                            required>
+
+                    </div>
+
+                </div>
+
+                <button
+                    class="btn btn-success mt-4">
+
+                    Create Event
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<%- include("../partials/footer") %>

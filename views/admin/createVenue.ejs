@@ -1,0 +1,83 @@
+<%- include("../partials/header") %>
+<%- include("../partials/navbar") %>
+
+<div class="container mt-5">
+
+    <div class="card shadow">
+
+        <div class="card-header">
+            <h3>Create Venue</h3>
+        </div>
+
+        <div class="card-body">
+
+            <form action="/admin/venues/create" method="POST">
+
+                <div class="mb-3">
+                    <label>Venue Name</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="name"
+                        required>
+                </div>
+
+                <div class="mb-3">
+                    <label>Location</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="location"
+                        required>
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-4">
+                        <label>Rows</label>
+
+                        <input
+                            type="number"
+                            class="form-control"
+                            name="totalRows"
+                            required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>Columns</label>
+
+                        <input
+                            type="number"
+                            class="form-control"
+                            name="totalColumns"
+                            required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>Premium Rows</label>
+
+                        <input
+                            type="number"
+                            class="form-control"
+                            name="premiumRows"
+                            required>
+                    </div>
+
+                </div>
+
+                <button
+                    class="btn btn-primary mt-4">
+
+                    Create Venue
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<%- include("../partials/footer") %>
