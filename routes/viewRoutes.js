@@ -8,8 +8,13 @@ const eventController = require("../controllers/eventController");
 const protect = require("../middleware/authMiddleware");
 const authorize = require("../middleware/authorize");
 
+// router.get("/", (req, res) => {
+//     res.render("home");
+// });
+
+//temporary fix as our home page is not build yet
 router.get("/", (req, res) => {
-    res.render("home");
+    res.redirect("/login");
 });
 
 router.get("/login", (req, res) => {
