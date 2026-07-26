@@ -1,0 +1,33 @@
+<%- include("../partials/head", { pageTitle: "Booking Confirmed" }) %>
+<%- include("../partials/navbar") %>
+
+<div class="ticket-stub">
+  <div class="ticket-top">
+    <div class="badge badge-confirmed" style="margin-bottom:12px;">CONFIRMED</div>
+    <h2><%= booking.event.title %></h2>
+    <p style="color:var(--text-muted); margin:0;">
+      <%= booking.event.venue.name %> &middot;
+      <%= new Date(booking.event.date).toLocaleDateString() %> at <%= booking.event.startTime %>
+    </p>
+  </div>
+  <div class="perforation"></div>
+  <div class="ticket-bottom">
+    <p style="margin:0 0 4px;">Seats:
+      <strong><%= booking.seats.map(function(s){ return s.seat.seatNumber; }).join(", ") %></strong>
+    </p>
+    <p style="margin:0 0 4px;">Total Paid: <strong>₹<%= booking.totalAmount %></strong></p>
+    <% if (booking.qrCode) { %>
+      <div class="qr-wrap">
+        <img src="<%= booking.qrCode %>" width="160" height="160" alt="QR ticket" />
+      </div>
+    <% } %>
+    <p class="ref">Ref: <%= booking.bookingReference %></p>
+    <p style="font-size:0.8rem; color:var(--text-muted);">A copy of this ticket has been emailed to you.</p>
+  </div>
+</div>
+
+<div class="container" style="text-align:center;">
+  <a href="/my-bookings" class="btn btn-outline">View All Bookings</a>
+</div>
+
+<%- include("../partials/footer") %>

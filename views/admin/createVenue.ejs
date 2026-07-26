@@ -1,83 +1,92 @@
-<%- include("../partials/header") %>
+<%- include("../partials/head", { pageTitle: "Create Venue" }) %>
 <%- include("../partials/navbar") %>
 
-<div class="container mt-5">
-
-    <div class="card shadow">
-
-        <div class="card-header">
-            <h3>Create Venue</h3>
+<div class="container">
+  <div class="panel form-panel" style="max-width:600px;">
+    <h2>Create Venue</h2>
+    <form id="createVenueForm">
+      <div class="form-group">
+        <label>Venue Name</label>
+        <input type="text" name="name" required />
+      </div>
+      <div class="form-group">
+        <label>Location</label>
+        <input type="text" name="location" required />
+      </div>
+      <div class="row-2">
+        <div class="form-group">
+          <label>Total Rows (max 26)</label>
+          <input type="number" name="totalRows" id="totalRows" min="1" max="26" value="8" required />
         </div>
-
-        <div class="card-body">
-
-            <form action="/admin/venues/create" method="POST">
-
-                <div class="mb-3">
-                    <label>Venue Name</label>
-                    <input
-                        type="text"
-                        class="form-control"
-                        name="name"
-                        required>
-                </div>
-
-                <div class="mb-3">
-                    <label>Location</label>
-                    <input
-                        type="text"
-                        class="form-control"
-                        name="location"
-                        required>
-                </div>
-
-                <div class="row">
-
-                    <div class="col-md-4">
-                        <label>Rows</label>
-
-                        <input
-                            type="number"
-                            class="form-control"
-                            name="totalRows"
-                            required>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label>Columns</label>
-
-                        <input
-                            type="number"
-                            class="form-control"
-                            name="totalColumns"
-                            required>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label>Premium Rows</label>
-
-                        <input
-                            type="number"
-                            class="form-control"
-                            name="premiumRows"
-                            required>
-                    </div>
-
-                </div>
-
-                <button
-                    class="btn btn-primary mt-4">
-
-                    Create Venue
-
-                </button>
-
-            </form>
-
+        <div class="form-group">
+          <label>Seats per Row</label>
+          <input type="number" name="totalColumns" id="totalColumns" min="1" max="50" value="10" required />
         </div>
+      </div>
+      <div class="form-group">
+        <label>Premium Rows (from the front)</label>
+        <input type="number" name="premiumRows" id="premiumRows" min="0" value="2" required />
+      </div>
+      <div class="form-error" id="formError"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Create Venue</button>
+    </form>
+  </div>
 
+  <div class="panel" style="max-width:600px; margin: 0 auto 48px;">
+    <h3>Layout Preview</h3>
+    <div class="seat-legend">
+      <span><span class="legend-swatch" style="background:var(--accent);"></span>Premium</span>
+      <span><span class="legend-swatch" style="background:var(--success);"></span>Standard</span>
     </div>
-
+    <div id="preview" class="seat-map"></div>
+  </div>
 </div>
+
+<script>
+  const rowsInput = document.getElementById("totalRows");
+  const colsInput = document.getElementById("totalColumns");
+  const premiumInput = document.getElementById("premiumRows");
+  const preview = document.getElementById("preview");
+
+  function renderPreview() {
+    const rows = Math.min(Number(rowsInput.value) || 0, 26);
+    const cols = Math.min(Number(colsInput.value) || 0, 50);
+    const premium = Number(premiumInput.value) || 0;
+
+    preview.innerHTML = "";
+    for (let r = 0; r < rows; r++) {
+      const rowEl = document.createElement("div");
+      rowEl.className = "seat-row";
+      for (let c = 0; c < cols; c++) {
+        const seat = document.createElement("div");
+        seat.style.width = "16px";
+        seat.style.height = "16px";
+        seat.style.borderRadius = "3px";
+        seat.style.background = r < premium ? "var(--accent)" : "var(--success)";
+        rowEl.appendChild(seat);
+      }
+      preview.appendChild(rowEl);
+    }
+  }
+
+  [rowsInput, colsInput, premiumInput].forEach((el) => el.addEventListener("input", renderPreview));
+  renderPreview();
+
+  document.getElementById("createVenueForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const res = await fetch("/api/venues", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.fromEntries(f)),
+    });
+    const data = await res.json();
+    if (data.success) {
+      window.location.href = "/dashboard";
+    } else {
+      document.getElementById("formError").innerText = data.message;
+    }
+  });
+</script>
 
 <%- include("../partials/footer") %>

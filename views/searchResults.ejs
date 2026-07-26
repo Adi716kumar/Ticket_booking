@@ -1,0 +1,34 @@
+<%- include("partials/head", { pageTitle: "Search Results" }) %>
+<%- include("partials/navbar") %>
+
+<div class="container">
+  <h1 style="margin-top:32px;">Results for "<%= query %>"</h1>
+  <form class="search-bar" action="/search" method="GET" style="margin:20px 0 8px;">
+    <input type="text" name="q" value="<%= query %>" />
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
+  <p style="color:var(--text-muted); font-size:0.85rem;">
+    <% if (filters.type) { %>Type: <%= filters.type %> &middot; <% } %>
+    <% if (filters.maxPrice) { %>Under ₹<%= filters.maxPrice %> &middot; <% } %>
+    <% if (filters.dateFrom) { %>From <%= new Date(filters.dateFrom).toLocaleDateString() %><% } %>
+  </p>
+
+  <% if (events.length === 0) { %>
+    <div class="empty-state">No events match that search. Try a broader query.</div>
+  <% } else { %>
+    <div class="event-grid">
+      <% events.forEach(function(evt) { %>
+        <a href="/events/<%= evt._id %>" class="event-card">
+          <div class="poster"><%= evt.type %></div>
+          <div class="info">
+            <h3><%= evt.title %></h3>
+            <div class="meta"><%= evt.venue.name %> &middot; <%= new Date(evt.date).toLocaleDateString() %></div>
+            <div class="price">From ₹<%= Math.min(evt.pricing.Standard, evt.pricing.Premium) %></div>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+
+<%- include("partials/footer") %>

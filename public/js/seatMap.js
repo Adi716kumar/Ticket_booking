@@ -1,233 +1,166 @@
-console.log("seatMap.js loaded");
+// Expects the page to define: window.EVENT_ID, and to have loaded the
+// socket.io client script (served automatically by the socket.io server
+// at /socket.io/socket.io.js).
 
 let selectedSeats = [];
 let heldSeats = [];
 
-// Seat Selection
-const buttons = document.querySelectorAll(".seat-btn");
+const seatMapEl = document.getElementById("seatMap");
 
-buttons.forEach(btn => {
+function seatButton(id) {
+  return document.querySelector(`.seat-btn[data-id="${id}"]`);
+}
 
-    btn.addEventListener("click", () => {
+function paintSeat(id, status) {
+  const btn = seatButton(id);
+  if (!btn) return;
 
-        const id = btn.dataset.id;
+  btn.classList.remove("seat-available", "seat-held", "seat-booked", "seat-selected");
+  btn.disabled = false;
 
-        if (selectedSeats.includes(id)) {
+  if (status === "Available") {
+    btn.classList.add("seat-available");
+  } else if (status === "Held") {
+    btn.classList.add("seat-held");
+    btn.disabled = true;
+  } else if (status === "Booked") {
+    btn.classList.add("seat-booked");
+    btn.disabled = true;
+  }
+}
 
-            selectedSeats = selectedSeats.filter(s => s !== id);
+async function refetchSeatMap() {
+  try {
+    const res = await fetch(`/api/seats/${window.EVENT_ID}`);
+    const data = await res.json();
+    if (!data.success) return;
 
-            btn.classList.remove("btn-primary");
-            btn.classList.add("btn-success");
-
-        } else {
-
-            selectedSeats.push(id);
-
-            btn.classList.remove("btn-success");
-            btn.classList.add("btn-primary");
-
-        }
-
-        console.log(selectedSeats);
-
+    data.seats.forEach((showSeat) => {
+      // Don't clobber a seat the current user has selected-but-not-yet-held
+      // locally, or one they're actively holding — only repaint seats
+      // whose true server status differs from what we're showing.
+      if (selectedSeats.includes(showSeat._id) || heldSeats.includes(showSeat._id)) return;
+      paintSeat(showSeat._id, showSeat.status);
     });
+  } catch (err) {
+    console.log("Seat map refetch failed:", err.message);
+  }
+}
 
-});
+// --- Socket.IO live updates ---
+if (window.io) {
+  const socket = window.io();
+  socket.emit("joinEvent", window.EVENT_ID);
 
-// Hold Seats
-document
-.getElementById("holdBtn")
-.addEventListener("click", () => {
+  // Server broadcasts are a "something changed" signal, not a guaranteed
+  // literal per-seat status (see bookingService.js comments) — so we
+  // always refetch the real seat map rather than trusting the payload.
+  socket.on("seatUpdate", () => {
+    refetchSeatMap();
+  });
+}
 
-    fetch("/api/seats/hold", {
+// --- Seat selection (not yet held) ---
+if (seatMapEl) {
+  seatMapEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".seat-btn");
+    if (!btn || btn.disabled) return;
 
+    const id = btn.dataset.id;
+
+    if (selectedSeats.includes(id)) {
+      selectedSeats = selectedSeats.filter((s) => s !== id);
+      btn.classList.remove("seat-selected");
+      btn.classList.add("seat-available");
+    } else {
+      selectedSeats.push(id);
+      btn.classList.remove("seat-available");
+      btn.classList.add("seat-selected");
+    }
+  });
+}
+
+// --- Hold seats ---
+const holdBtn = document.getElementById("holdBtn");
+if (holdBtn) {
+  holdBtn.addEventListener("click", async () => {
+    if (selectedSeats.length === 0) {
+      alert("Select at least one seat first.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/seats/${window.EVENT_ID}/hold`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seatIds: selectedSeats }),
+      });
+      const data = await res.json();
 
-        headers: {
-            "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-            seatIds: selectedSeats
-        })
-
-    })
-    .then(res => res.json())
-    .then(data => {
-
-    if(data.success){
-
-        alert("Seats held successfully.");
+      if (data.success) {
         heldSeats = [...selectedSeats];
-
-        buttons.forEach(btn => {
-
-            if(selectedSeats.includes(btn.dataset.id)){
-
-                btn.classList.remove("btn-primary");
-                btn.classList.add("btn-warning");
-
-                btn.disabled = true;
-
-            }
-
-        });
+        selectedSeats.forEach((id) => paintSeat(id, "Held"));
         selectedSeats = [];
-
-    }
-    else{
-
+        document.getElementById("bookBtn")?.removeAttribute("disabled");
+      } else {
         alert(data.message);
-
+        refetchSeatMap(); // someone else may have taken a seat we tried to hold
+      }
+    } catch (err) {
+      alert("Hold request failed. Please try again.");
     }
+  });
+}
 
-});
-});
-
-// Book Seats
+// --- Book held seats ---
 const bookBtn = document.getElementById("bookBtn");
-
-bookBtn.addEventListener("click", () => {
-
+if (bookBtn) {
+  bookBtn.addEventListener("click", async () => {
     if (heldSeats.length === 0) {
-        alert("Please hold seats before booking.");
-        return;
+      alert("Hold seats before booking.");
+      return;
     }
 
     bookBtn.disabled = true;
     bookBtn.innerText = "Booking...";
 
-    fetch("/api/bookings", {
-
+    try {
+      const res = await fetch("/api/bookings", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId: window.EVENT_ID, seatIds: heldSeats }),
+      });
+      const data = await res.json();
 
-        headers: {
-            "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-
-            eventId: EVENT_ID,
-
-            seatIds: heldSeats
-
-        })
-
-    })
-    .then(res => res.json())
-    .then(data => {
-
-        if (data.success) {
-
-            alert("Booking Successful!");
-
-            buttons.forEach(btn => {
-
-                if (heldSeats.includes(btn.dataset.id)) {
-
-                    btn.classList.remove("btn-warning");
-                    btn.classList.add("btn-danger");
-                    btn.disabled = true;
-
-                }
-
-            });
-
-            heldSeats = [];
-
-            // Reset button for next booking
-            bookBtn.disabled = false;
-            bookBtn.innerText = "Book Selected Seats";
-
-        } else {
-
-            alert(data.message);
-
-            bookBtn.disabled = false;
-            bookBtn.innerText = "Book Selected Seats";
-
-        }
-
-    })
-    .catch(err => {
-
-        console.error(err);
-
+      if (data.success) {
+        window.location.href = `/bookings/${data.booking._id}/confirmation`;
+      } else {
+        alert(data.message);
         bookBtn.disabled = false;
         bookBtn.innerText = "Book Selected Seats";
+        refetchSeatMap();
+      }
+    } catch (err) {
+      alert("Booking failed. Please try again.");
+      bookBtn.disabled = false;
+      bookBtn.innerText = "Book Selected Seats";
+    }
+  });
+}
 
-        alert("Booking Failed");
-
-    });
-
+// --- Waitlist join buttons (Premium / Standard) ---
+document.querySelectorAll(".waitlist-btn").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId: window.EVENT_ID, category: btn.dataset.category }),
+      });
+      const data = await res.json();
+      alert(data.message || (data.success ? "Joined waitlist." : "Could not join waitlist."));
+    } catch (err) {
+      alert("Something went wrong joining the waitlist.");
+    }
+  });
 });
-
-// Premium Waitlist
-const premiumBtn = document.getElementById("premiumWaitlistBtn");
-
-if (premiumBtn) {
-
-    premiumBtn.addEventListener("click", () => {
-
-        fetch("/api/waitlist", {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-
-                event: EVENT_ID,
-
-                category: "Premium"
-
-            })
-
-        })
-        .then(res => res.json())
-        .then(data => {
-
-            alert(data.message);
-
-        });
-
-    });
-
-}
-
-// Standard Waitlist
-const standardBtn = document.getElementById("standardWaitlistBtn");
-
-if (standardBtn) {
-
-    standardBtn.addEventListener("click", () => {
-
-        fetch("/api/waitlist", {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-
-                event: EVENT_ID,
-
-                category: "Standard"
-
-            })
-
-        })
-        .then(res => res.json())
-        .then(data => {
-
-            alert(data.message);
-
-        });
-
-    });
-
-}

@@ -1,0 +1,51 @@
+<%- include("../partials/head", { pageTitle: "My Bookings" }) %>
+<%- include("../partials/navbar") %>
+
+<div class="container" style="margin-top:32px;">
+  <h1>My Bookings</h1>
+
+  <% if (bookings.length === 0) { %>
+    <div class="empty-state">No bookings yet. <a href="/events" style="color:var(--accent);">Browse events</a></div>
+  <% } else { %>
+    <table class="data-table">
+      <thead>
+        <tr><th>Event</th><th>Date</th><th>Seats</th><th>Total</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% bookings.forEach(function(b) { %>
+          <tr>
+            <td><%= b.event.title %></td>
+            <td><%= new Date(b.event.date).toLocaleDateString() %></td>
+            <td><%= b.seats.map(function(s){ return s.seat.seatNumber; }).join(", ") %></td>
+            <td>₹<%= b.totalAmount %></td>
+            <td>
+              <span class="badge badge-<%= b.status.toLowerCase() %>"><%= b.status %></span>
+            </td>
+            <td>
+              <% if (b.status === "Confirmed") { %>
+                <button class="btn btn-ghost cancel-btn" data-id="<%= b._id %>">Cancel</button>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<script>
+  document.querySelectorAll(".cancel-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Cancel this booking?")) return;
+      const res = await fetch(`/api/bookings/${btn.dataset.id}/cancel`, { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        window.location.reload();
+      } else {
+        alert(data.message);
+      }
+    });
+  });
+</script>
+
+<%- include("../partials/footer") %>

@@ -1,0 +1,57 @@
+<%- include("../partials/head", { pageTitle: event.title }) %>
+<%- include("../partials/navbar") %>
+
+<div class="container" style="margin-top:32px;">
+  <h1><%= event.title %></h1>
+  <p style="color:var(--text-muted);">
+    <%= event.venue.name %>, <%= event.venue.location %> &middot;
+    <%= new Date(event.date).toLocaleDateString() %> at <%= event.startTime %>
+  </p>
+
+  <div class="seat-legend">
+    <span><span class="legend-swatch" style="background:var(--success);"></span>Available</span>
+    <span><span class="legend-swatch" style="background:#fff;"></span>Selected</span>
+    <span><span class="legend-swatch" style="background:var(--warning);"></span>Held</span>
+    <span><span class="legend-swatch" style="background:var(--accent);"></span>Booked</span>
+  </div>
+
+  <div class="seat-map" id="seatMap">
+    <div class="screen-bar"></div>
+    <% rowOrder.forEach(function(row) { %>
+      <div class="seat-row">
+        <span class="row-label"><%= row %></span>
+        <% seatsByRow[row].forEach(function(s) { %>
+          <button
+            class="seat-btn seat-<%= s.status.toLowerCase() %>"
+            data-id="<%= s._id %>"
+            title="<%= s.seat.seatNumber %> (<%= s.category %>, ₹<%= s.price %>)"
+            <%= s.status !== "Available" ? "disabled" : "" %>
+          ><%= s.seat.column %></button>
+        <% }) %>
+      </div>
+    <% }) %>
+  </div>
+
+  <div style="display:flex; gap:12px; margin-top:20px;">
+    <button id="holdBtn" class="btn btn-primary">Hold Selected Seats</button>
+    <button id="bookBtn" class="btn btn-outline" disabled>Book Selected Seats</button>
+  </div>
+
+  <div class="panel" style="margin-top:32px;">
+    <h3>Sold out for a category? Join the waitlist</h3>
+    <p style="color:var(--text-muted); font-size:0.85rem;">
+      We'll email you a time-limited link the moment a seat opens up.
+    </p>
+    <div style="display:flex; gap:12px;">
+      <button class="btn btn-outline waitlist-btn" data-category="Premium">Waitlist — Premium</button>
+      <button class="btn btn-outline waitlist-btn" data-category="Standard">Waitlist — Standard</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.EVENT_ID = "<%= event._id %>";
+</script>
+<script src="/js/seatMap.js"></script>
+
+<%- include("../partials/footer") %>

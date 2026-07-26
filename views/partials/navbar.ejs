@@ -1,46 +1,15 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-
-    <div class="container">
-
-        <a class="navbar-brand"
-           href="/">
-
-            Ticket Booking
-
-        </a>
-
-        <div>
-
-    <a href="/events"
-       class="btn btn-outline-info me-2">
-
-        Events
-
-    </a>
-
-    <a href="/bookings"
-       class="btn btn-outline-success me-2">
-
-        My Bookings
-
-    </a>
-
-    <a href="/waitlist"
-       class="btn btn-outline-warning me-2">
-
-        My Waitlist
-
-    </a>
-
-    <a href="/logout"
-       class="btn btn-danger">
-
-        Logout
-
-    </a>
-
-</div>
-
-    </div>
-
+<nav class="navbar">
+  <a href="/" class="logo">Cine<span>Ticket</span></a>
+  <div class="nav-right">
+    <% if (user) { %>
+      <span class="user-chip"><strong><%= user.name %></strong> &middot; <%= user.role %></span>
+      <a href="/dashboard" class="btn btn-outline">Dashboard</a>
+      <form action="/logout" method="POST" style="display:inline">
+        <button type="submit" class="btn btn-ghost">Logout</button>
+      </form>
+    <% } else { %>
+      <a href="/login" class="btn btn-ghost">Login</a>
+      <a href="/register" class="btn btn-primary">Sign Up</a>
+    <% } %>
+  </div>
 </nav>

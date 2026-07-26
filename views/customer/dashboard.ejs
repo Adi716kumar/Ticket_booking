@@ -1,0 +1,35 @@
+<%- include("../partials/head", { pageTitle: "My Dashboard" }) %>
+<%- include("../partials/navbar") %>
+
+<div class="container" style="margin-top:32px;">
+  <h1>Welcome, <%= user.name %></h1>
+  <div style="display:flex; gap:12px; margin:20px 0 8px;">
+    <a href="/events" class="btn btn-primary">Browse Events</a>
+    <a href="/my-bookings" class="btn btn-outline">My Bookings</a>
+    <a href="/my-waitlist" class="btn btn-outline">My Waitlist</a>
+  </div>
+</div>
+
+<div class="container">
+  <h2 style="margin-top:32px;">Currently Showing</h2>
+</div>
+<section class="carousel-section">
+  <div class="carousel-track">
+    <% const doubled = events.concat(events); %>
+    <% doubled.forEach(function(evt) { %>
+      <a href="/events/<%= evt._id %>" class="event-card">
+        <div class="poster"><%= evt.type %></div>
+        <div class="info">
+          <h3><%= evt.title %></h3>
+          <div class="meta"><%= evt.venue.name %> &middot; <%= new Date(evt.date).toLocaleDateString() %></div>
+          <div class="price">From ₹<%= Math.min(evt.pricing.Standard, evt.pricing.Premium) %></div>
+        </div>
+      </a>
+    <% }) %>
+    <% if (events.length === 0) { %>
+      <div class="empty-state">No events scheduled right now.</div>
+    <% } %>
+  </div>
+</section>
+
+<%- include("../partials/footer") %>

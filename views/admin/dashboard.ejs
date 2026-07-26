@@ -1,30 +1,58 @@
-<%- include("../partials/header") %>
+<%- include("../partials/head", { pageTitle: "Admin Dashboard" }) %>
 <%- include("../partials/navbar") %>
 
-<div class="container mt-5">
-
-    <h2>Admin Dashboard</h2>
-
-    <hr>
-
-    <div class="d-grid gap-3 col-4">
-
-        <a href="/admin/venues/create"
-           class="btn btn-primary">
-
-            Create Venue
-
-        </a>
-
-        <a href="/admin/venues"
-           class="btn btn-outline-primary">
-
-            View Venues
-
-        </a>
-
+<div class="container" style="margin-top:32px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <h1>Venues</h1>
+    <div style="display:flex; gap:12px;">
+      <a href="/admin/register-organizer" class="btn btn-outline">Register Organizer</a>
+      <a href="/admin/venues/new" class="btn btn-primary">+ Create Venue</a>
     </div>
+  </div>
 
+  <% if (venues.length === 0) { %>
+    <div class="empty-state">No venues yet.</div>
+  <% } else { %>
+    <table class="data-table">
+      <thead>
+        <tr><th>Name</th><th>Location</th><th>Layout</th><th>Currently Running</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% venues.forEach(function(v) { %>
+          <tr>
+            <td><%= v.name %></td>
+            <td><%= v.location %></td>
+            <td><%= v.totalRows %>&times;<%= v.totalColumns %> (<%= v.premiumRows %> premium rows)</td>
+            <td>
+              <% if (v.currentEvent) { %>
+                <%= v.currentEvent.title %> — <%= new Date(v.currentEvent.date).toLocaleDateString() %>
+              <% } else { %>
+                <span style="color:var(--text-muted);">Nothing scheduled</span>
+              <% } %>
+            </td>
+            <td>
+              <button class="btn btn-ghost delete-venue-btn" data-id="<%= v._id %>">Delete</button>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
 </div>
+
+<script>
+  document.querySelectorAll(".delete-venue-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Delete this venue? This only works if it has no upcoming events.")) return;
+      const res = await fetch(`/api/venues/${btn.dataset.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (data.success) {
+        window.location.reload();
+      } else {
+        alert(data.message);
+      }
+    });
+  });
+</script>
 
 <%- include("../partials/footer") %>

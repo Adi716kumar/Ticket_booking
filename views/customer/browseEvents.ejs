@@ -1,0 +1,29 @@
+<%- include("../partials/head", { pageTitle: "Browse Events" }) %>
+<%- include("../partials/navbar") %>
+
+<div class="container" style="margin-top:32px;">
+  <h1>Browse Events</h1>
+  <form class="search-bar" action="/search" method="GET" style="margin:20px 0;">
+    <input type="text" name="q" placeholder='Try "movie tonight under ₹300"' />
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
+
+  <% if (events.length === 0) { %>
+    <div class="empty-state">No events scheduled right now.</div>
+  <% } else { %>
+    <div class="event-grid">
+      <% events.forEach(function(evt) { %>
+        <a href="/events/<%= evt._id %>" class="event-card">
+          <div class="poster"><%= evt.type %></div>
+          <div class="info">
+            <h3><%= evt.title %></h3>
+            <div class="meta"><%= evt.venue.name %> &middot; <%= new Date(evt.date).toLocaleDateString() %></div>
+            <div class="price">From ₹<%= Math.min(evt.pricing.Standard, evt.pricing.Premium) %></div>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+
+<%- include("../partials/footer") %>

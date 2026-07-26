@@ -1,0 +1,37 @@
+<%- include("../partials/head", { pageTitle: event.title + " — Stats" }) %>
+<%- include("../partials/navbar") %>
+
+<div class="container" style="margin-top:32px;">
+  <h1><%= event.title %></h1>
+  <p style="color:var(--text-muted);">
+    <%= event.venue.name %> &middot; <%= new Date(event.date).toLocaleDateString() %> at <%= event.startTime %>
+  </p>
+
+  <div class="stat-grid">
+    <div class="stat-box booked">
+      <div class="value"><%= stats.booked %></div>
+      <div class="label">Booked Seats</div>
+    </div>
+    <div class="stat-box held">
+      <div class="value"><%= stats.held %></div>
+      <div class="label">Currently Held</div>
+    </div>
+    <div class="stat-box">
+      <div class="value"><%= stats.available %></div>
+      <div class="label">Available</div>
+    </div>
+    <div class="stat-box revenue">
+      <div class="value">₹<%= stats.revenue %></div>
+      <div class="label">Revenue</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p style="margin:0; color:var(--text-muted); font-size:0.85rem;">
+      Total seats in venue: <%= stats.totalSeats %>
+      &middot; Occupancy: <%= stats.totalSeats > 0 ? Math.round((stats.booked / stats.totalSeats) * 100) : 0 %>%
+    </p>
+  </div>
+</div>
+
+<%- include("../partials/footer") %>

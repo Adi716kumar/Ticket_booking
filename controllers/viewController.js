@@ -1,252 +1,140 @@
-const authService = require("../services/authService");
-const eventService = require("../services/eventService");
-const Event = require("../models/Event");
-const bookingService = require("../services/bookingService");
-const venueService = require("../services/venueService");
-const waitlistService = require("../services/waitlistService");
-
-exports.register = async (req, res) => {
-    try {
-
-        await authService.registerUser(req.body);
-
-        res.redirect("/login");
-
-    } catch (error) {
-
-        res.send(error.message);
-
-    }
-};
-
-
-exports.login = async (req, res) => {
-
-    try {
-
-        const data = await authService.loginUser(req.body);
-
-        res.cookie("token", data.token, {
-
-            httpOnly: true,
-
-            maxAge: 7 * 24 * 60 * 60 * 1000
-
-        });
-
-        if (data.user.role === "customer") {
-
-            return res.redirect("/dashboard");
-
-        }
-
-        if (data.user.role === "organizer") {
-
-            return res.redirect("/organizer");
-
-        }
-
-        return res.redirect("/admin");
-
-    }
-    catch (error) {
-
-        res.send(error.message);
-
-    }
-
-};
-
-exports.events = async (req, res) => {
-
-    try {
-
-        const events =
-            await eventService.getAllEventsService();
-
-        res.render("customer/events", {
-
-            events
-
-        });
-
-    } catch (error) {
-
-        res.send(error.message);
-
-    }
-
-};
-
-exports.seatMap = async(req,res)=>{
-
-    const event =
-    await Event.findById(req.params.id);
-
-    const seats =
-    await eventService.getSeatMapService(
-        req.params.id
-    );
-
-    res.render("customer/seatMap",{
-
-        event,
-
-        seats
-
-    });
-
-};
-
-exports.seatMap = async (req, res) => {
-
-    const event =
-        await Event.findById(req.params.id);
-
-    const seats =
-        await eventService.getSeatMapService(
-            req.params.id
-        );
-
-    const premiumAvailable = seats.filter(
-        seat =>
-            seat.category === "Premium" &&
-            seat.status === "Available"
-    ).length;
-
-    const standardAvailable = seats.filter(
-        seat =>
-            seat.category === "Standard" &&
-            seat.status === "Available"
-    ).length;
-
-    res.render("customer/seatMap", {
-
-        event,
-
-        seats,
-
-        premiumAvailable,
-
-        standardAvailable
-
-    });
-
-};
-
-exports.myBookings = async (req, res) => {
-
-    try {
-
-        const userId = req.user._id;
-
-        const bookings =
-        await bookingService.getMyBookingsService(
-            userId
-        );
-
-        res.render(
-            "customer/booking",
-            {
-                bookings
-            }
-        );
-
-    } catch (error) {
-
-        res.send(error.message);
-
-    }
-
-};
-
-exports.cancelBooking = async(req,res)=>{
-
-    try{
-
-        await bookingService.cancelBookingService(
-            req.params.id
-        );
-
-        res.redirect("/bookings");
-
-    }
-    catch(error){
-
-        res.send(error.message);
-
-    }
-
+const { getEventsService, getEventByIdService, getEventStatsService, getEventsByOrganizerService } = require("../services/eventService");
+const { getSeatMapService } = require("../services/seatService");
+const { getMyBookingsService } = require("../services/bookingService");
+const { getMyWaitlistService } = require("../services/waitlistService");
+const { searchEventsService } = require("../services/searchService");
+const { getAllVenuesService } = require("../services/venueService");
+const Booking = require("../models/Booking");
+
+function requireLogin(req, res) {
+  if (!req.user) {
+    res.redirect("/login");
+    return false;
+  }
+  return true;
 }
 
-
-exports.viewVenues = async (req, res) => {
-
-    try {
-
-        const venues = await venueService.getAllVenuesService();
-
-        res.render("admin/viewVenues", {
-            venues
-        });
-
-    } catch (error) {
-
-        res.send(error.message);
-
-    }
-
+exports.renderHome = async (req, res) => {
+  const events = await getEventsService();
+  res.render("home", { events });
 };
 
-exports.createEventPage = async (req, res) => {
+exports.renderLogin = (req, res) => {
+  if (req.user) return res.redirect("/dashboard");
+  res.render("auth/login");
+};
 
-    const venues = await venueService.getAllVenuesService();
+exports.renderRegister = (req, res) => {
+  if (req.user) return res.redirect("/dashboard");
+  res.render("auth/register");
+};
 
-    res.render("organizer/createEvent", {
-        venues
+exports.handleLogout = (req, res) => {
+  res.clearCookie("token");
+  res.redirect("/");
+};
+
+exports.renderSearchResults = async (req, res) => {
+  const { q } = req.query;
+  if (!q || !q.trim()) return res.redirect("/");
+  const { filters, events } = await searchEventsService(q);
+  res.render("searchResults", { query: q, filters, events });
+};
+
+// Single /dashboard route that dispatches by role, so the navbar and any
+// bookmarked link always lands the user on the right dashboard.
+exports.renderDashboard = async (req, res) => {
+  if (!requireLogin(req, res)) return;
+
+  if (req.user.role === "admin") {
+    const venues = await getAllVenuesService();
+    return res.render("admin/dashboard", { venues });
+  }
+
+  if (req.user.role === "organizer") {
+    const events = await getEventsByOrganizerService(req.user._id);
+    return res.render("organizer/dashboard", { events });
+  }
+
+  const events = await getEventsService();
+  res.render("customer/dashboard", { events });
+};
+
+exports.renderBrowseEvents = async (req, res) => {
+  if (!requireLogin(req, res)) return;
+  const events = await getEventsService();
+  res.render("customer/browseEvents", { events });
+};
+
+exports.renderEventDetails = async (req, res) => {
+  try {
+    const event = await getEventByIdService(req.params.id);
+    const seats = await getSeatMapService(req.params.id);
+
+    const seatsByRow = {};
+    seats.forEach((s) => {
+      const row = s.seat.row;
+      seatsByRow[row] = seatsByRow[row] || [];
+      seatsByRow[row].push(s);
     });
+    Object.values(seatsByRow).forEach((rowSeats) => rowSeats.sort((a, b) => a.seat.column - b.seat.column));
+    const rowOrder = Object.keys(seatsByRow).sort();
 
+    res.render("customer/eventDetails", { event, seatsByRow, rowOrder });
+  } catch (error) {
+    res.status(404).send(error.message);
+  }
 };
 
-exports.myEvents = async (req, res) => {
-
-    try {
-
-        const events = await eventService.getOrganizerEventsService(
-            req.user._id
-        );
-
-        res.render("organizer/myEvents", {
-            events
-        });
-
-    } catch (error) {
-
-        res.send(error.message);
-
-    }
-
+exports.renderMyBookings = async (req, res) => {
+  if (!requireLogin(req, res)) return;
+  const bookings = await getMyBookingsService(req.user._id);
+  res.render("customer/myBookings", { bookings });
 };
 
-exports.myWaitlist = async (req, res) => {
+exports.renderMyWaitlist = async (req, res) => {
+  if (!requireLogin(req, res)) return;
+  const entries = await getMyWaitlistService(req.user._id);
+  res.render("customer/myWaitlist", { entries });
+};
 
-    try {
+exports.renderBookingConfirmation = async (req, res) => {
+  if (!requireLogin(req, res)) return;
+  const booking = await Booking.findOne({ _id: req.params.id, user: req.user._id })
+    .populate("event")
+    .populate({ path: "seats", populate: { path: "seat" } });
 
-        const waitlists =
-            await waitlistService.getMyWaitlistService(
-                req.user._id
-            );
+  if (!booking) return res.status(404).send("Booking not found");
+  res.render("customer/bookingConfirmation", { booking });
+};
 
-        res.render("customer/waitlist", {
+exports.renderCreateEventForm = async (req, res) => {
+  if (!requireLogin(req, res)) return;
+  if (req.user.role !== "organizer") return res.status(403).send("Organizer access only");
+  const venues = await getAllVenuesService();
+  res.render("organizer/createEvent", { venues });
+};
 
-            waitlists
+exports.renderEventStats = async (req, res) => {
+  if (!requireLogin(req, res)) return;
+  const event = await getEventByIdService(req.params.id);
 
-        });
+  if (String(event.organizer._id) !== String(req.user._id) && req.user.role !== "admin") {
+    return res.status(403).send("Not your event");
+  }
 
-    } catch (error) {
+  const stats = await getEventStatsService(req.params.id);
+  res.render("organizer/eventStats", { event, stats });
+};
 
-        res.send(error.message);
+exports.renderCreateVenueForm = (req, res) => {
+  if (!requireLogin(req, res)) return;
+  if (req.user.role !== "admin") return res.status(403).send("Admin access only");
+  res.render("admin/createVenue");
+};
 
-    }
-
+exports.renderRegisterOrganizerForm = (req, res) => {
+  if (!requireLogin(req, res)) return;
+  if (req.user.role !== "admin") return res.status(403).send("Admin access only");
+  res.render("admin/registerOrganizer");
 };

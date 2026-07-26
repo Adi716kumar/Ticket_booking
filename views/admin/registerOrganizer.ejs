@@ -1,0 +1,50 @@
+<%- include("../partials/head", { pageTitle: "Register Organizer" }) %>
+<%- include("../partials/navbar") %>
+
+<div class="container">
+  <div class="panel form-panel">
+    <h2>Register an Organizer</h2>
+    <p style="color:var(--text-muted); font-size:0.85rem; margin-top:-8px;">
+      Organizer accounts can only be created here, by an admin — not through public sign-up.
+    </p>
+    <form id="registerOrgForm">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" name="name" required />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" required />
+      </div>
+      <div class="form-group">
+        <label>Temporary Password</label>
+        <input type="password" name="password" required minlength="6" />
+      </div>
+      <div class="form-error" id="formError"></div>
+      <div id="formSuccess" style="color:var(--success); font-size:0.85rem; margin-top:10px;"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Register Organizer</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.getElementById("registerOrgForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const res = await fetch("/api/auth/register-organizer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.fromEntries(f)),
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById("formError").innerText = "";
+      document.getElementById("formSuccess").innerText = `Organizer account created for ${data.organizer.email}.`;
+      e.target.reset();
+    } else {
+      document.getElementById("formError").innerText = data.message;
+    }
+  });
+</script>
+
+<%- include("../partials/footer") %>

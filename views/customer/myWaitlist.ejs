@@ -1,0 +1,51 @@
+<%- include("../partials/head", { pageTitle: "My Waitlist" }) %>
+<%- include("../partials/navbar") %>
+
+<div class="container" style="margin-top:32px;">
+  <h1>My Waitlist</h1>
+
+  <% if (entries.length === 0) { %>
+    <div class="empty-state">You're not on any waitlists right now.</div>
+  <% } else { %>
+    <table class="data-table">
+      <thead>
+        <tr><th>Event</th><th>Category</th><th>Status</th><th>Offer Expires</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% entries.forEach(function(entry) { %>
+          <tr>
+            <td><%= entry.event.title %></td>
+            <td><%= entry.category %></td>
+            <td><span class="badge badge-<%= entry.status.toLowerCase() %>"><%= entry.status %></span></td>
+            <td>
+              <% if (entry.status === "Offered") { %>
+                <%= new Date(entry.offerExpiresAt).toLocaleString() %>
+              <% } else { %>&mdash;<% } %>
+            </td>
+            <td>
+              <% if (entry.status === "Offered") { %>
+                <button class="btn btn-primary accept-btn" data-id="<%= entry._id %>">Accept Offer</button>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<script>
+  document.querySelectorAll(".accept-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const res = await fetch(`/api/waitlist/${btn.dataset.id}/accept`, { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        window.location.href = `/bookings/${data.booking._id}/confirmation`;
+      } else {
+        alert(data.message);
+      }
+    });
+  });
+</script>
+
+<%- include("../partials/footer") %>

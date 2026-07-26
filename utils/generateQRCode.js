@@ -1,10 +1,10 @@
 const QRCode = require("qrcode");
 
-const generateQRCode = async (bookingReference) => {
-
-    const qr = await QRCode.toDataURL(bookingReference);
-
-    return qr;
-};
+// Encodes just the booking reference — keeps the QR payload small and
+// lets the venue-side scanner look up the full booking server-side rather
+// than trusting whatever's encoded in the image.
+async function generateQRCode(bookingReference) {
+  return QRCode.toDataURL(bookingReference);
+}
 
 module.exports = generateQRCode;

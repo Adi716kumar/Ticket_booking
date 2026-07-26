@@ -1,32 +1,48 @@
-<%- include("partials/header") %>
-
+<%- include("partials/head", { pageTitle: "CineTicket — Book Movies & Concerts" }) %>
 <%- include("partials/navbar") %>
 
-<div class="container mt-5">
+<section class="hero">
+  <h1>Big screens. Live stages. <span style="color:var(--accent)">Zero hassle.</span></h1>
+  <p>Hold your seats instantly, get a QR ticket by email, and never lose a spot to a slow checkout again.</p>
 
-    <div class="text-center">
+  <form class="search-bar" action="/search" method="GET">
+    <input
+      type="text"
+      name="q"
+      placeholder='Try "weekend concert under ₹1500"'
+      value="<%= typeof query !== 'undefined' ? query : '' %>"
+    />
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
 
-        <h1>
+  <% if (!user) { %>
+    <p style="margin-top:24px;">
+      New here? <a href="/register" style="color:var(--accent); font-weight:600;">Create a free account</a>
+    </p>
+  <% } %>
+</section>
 
-            Ticket Booking System
-
-        </h1>
-
-        <p class="mt-3">
-
-            Book Movies and Concert Tickets Easily
-
-        </p>
-
-        <a href="/events"
-           class="btn btn-primary">
-
-            Browse Events
-
-        </a>
-
-    </div>
-
+<div class="container">
+  <h2 style="margin-top:40px;">Now Showing</h2>
 </div>
+
+<section class="carousel-section">
+  <div class="carousel-track">
+    <% const doubled = events.concat(events); %>
+    <% doubled.forEach(function(evt) { %>
+      <a href="/events/<%= evt._id %>" class="event-card">
+        <div class="poster"><%= evt.type %></div>
+        <div class="info">
+          <h3><%= evt.title %></h3>
+          <div class="meta"><%= evt.venue.name %> &middot; <%= new Date(evt.date).toLocaleDateString() %></div>
+          <div class="price">From ₹<%= Math.min(evt.pricing.Standard, evt.pricing.Premium) %></div>
+        </div>
+      </a>
+    <% }) %>
+    <% if (events.length === 0) { %>
+      <div class="empty-state">No events scheduled right now. Check back soon.</div>
+    <% } %>
+  </div>
+</section>
 
 <%- include("partials/footer") %>

@@ -1,32 +1,33 @@
 {
-  "name": "ticket_booking",
+  "name": "ticket-booking-system",
   "version": "1.0.0",
-  "description": "",
+  "description": "Movie/concert ticket booking platform with seat holds, waitlist auto-assignment, QR ticketing, and live seat updates.",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "seed": "node utils/seed.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "bcrypt": "^6.0.0",
-    "cookie-parser": "^1.4.7",
-    "dotenv": "^17.4.2",
-    "ejs": "^6.0.1",
-    "express": "^5.2.1",
-    "express-validator": "^7.3.2",
-    "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.7.3",
-    "node-cron": "^4.5.0",
-    "nodemailer": "^9.0.3",
+    "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.21.1",
+    "express-validator": "^7.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.8.0",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.16",
     "qrcode": "^1.5.4",
-    "socket.io": "^4.8.3",
-    "uuid": "^14.0.1"
+    "socket.io": "^4.8.1",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.7"
   }
 }
