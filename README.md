@@ -3,6 +3,8 @@
 A ticket booking platform with a visual seat map, TTL-based seat holds, automatic waitlist
 reassignment, QR-code email tickets, and natural-language event search.
 
+Live Link : https://ticket-booking-bjpl.onrender.com
+
 ## Tech Stack
 
 - **Backend**: Node.js, Express 4
