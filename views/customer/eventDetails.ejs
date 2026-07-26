@@ -14,12 +14,20 @@
     <span><span class="legend-swatch" style="background:var(--warning);"></span>Held</span>
     <span><span class="legend-swatch" style="background:var(--accent);"></span>Booked</span>
   </div>
+  <div class="seat-legend">
+    <span><span class="row-category-tag premium">PREMIUM</span> ₹<%= event.pricing.Premium %></span>
+    <span><span class="row-category-tag standard">STANDARD</span> ₹<%= event.pricing.Standard %></span>
+  </div>
 
   <div class="seat-map" id="seatMap">
     <div class="screen-bar"></div>
     <% rowOrder.forEach(function(row) { %>
+      <% var rowCategory = seatsByRow[row][0].category; %>
       <div class="seat-row">
-        <span class="row-label"><%= row %></span>
+        <span class="row-label">
+          <span class="row-letter"><%= row %></span>
+          <span class="row-category-tag <%= rowCategory.toLowerCase() %>"><%= rowCategory %></span>
+        </span>
         <% seatsByRow[row].forEach(function(s) { %>
           <button
             class="seat-btn seat-<%= s.status.toLowerCase() %>"
